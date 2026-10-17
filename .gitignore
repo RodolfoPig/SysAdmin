@@ -1,0 +1,14 @@
+Logs/
+Backups/
+Notes/
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.ppk
+id_rsa*
+id_ed25519*
