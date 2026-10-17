@@ -81,3 +81,14 @@ git log --oneline
 
 Не храните в репозитории пароли, приватные SSH-ключи
 и другие секретные данные.
+
+## Testing
+
+Automated tests use Pester.
+
+Run from the repository root in PowerShell 7:
+
+```powershell
+Import-Module Pester
+Invoke-Pester -Path .\Tests\SysAdminToolkit.Tests.ps1 -Output Detailed
+```
