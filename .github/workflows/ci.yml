@@ -1,0 +1,61 @@
+name: SysAdmin Toolkit CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./Tests/SysAdminToolkit.Tests.ps1 -Output Detailed -PassThru
+
+          if ($result.FailedCount -gt 0) {
+            Write-Error "$($result.FailedCount) Pester test(s) failed."
+            exit 1
+          }
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = (Resolve-Path ./PSScriptAnalyzerSettings.psd1).Path
+
+          $issues = @(
+            Invoke-ScriptAnalyzer `
+              -Path ./Scripts `
+              -Recurse `
+              -Settings $settings `
+              -Severity Error, Warning
+          )
+
+          if ($issues.Count -gt 0) {
+            $issues |
+              Format-Table RuleName, Severity, ScriptName, Line, Message -Wrap -AutoSize
+            exit 1
+          }
+
+          Write-Host 'PSScriptAnalyzer: no errors or warnings.'
