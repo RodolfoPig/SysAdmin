@@ -7,6 +7,7 @@ BeforeAll {
         'Get-NetworkDiagnostics.ps1'
         'Get-ServiceHealth.ps1'
         'Invoke-SystemHealthReport.ps1'
+        'Get-RemoteComputerDiagnostics.ps1'
     )
 }
 
