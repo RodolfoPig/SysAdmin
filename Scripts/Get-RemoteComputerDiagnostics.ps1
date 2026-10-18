@@ -126,3 +126,35 @@ $result.Disks | Format-Table -AutoSize
 
 Write-Host "`n=== IMPORTANT SERVICES ===" -ForegroundColor Cyan
 $result.Services | Format-Table -AutoSize
+
+
+# --- REPORT EXPORT ---
+$reportDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'Reports'
+New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
+
+$reportStamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$safeComputerName = ($result.ComputerName -replace '[^a-zA-Z0-9_.-]', '_')
+$reportPath = Join-Path $reportDir "RemoteDiagnostics-$safeComputerName-$reportStamp.json"
+
+$report = [pscustomobject]@{
+    GeneratedAt = (Get-Date).ToString('o')
+    RequestedTarget = $ComputerName
+    Computer = [pscustomobject]@{
+        Name = $result.ComputerName
+        Domain = $result.Domain
+        PartOfDomain = $result.PartOfDomain
+        OS = $result.OS
+        OSVersion = $result.OSVersion
+        LastBoot = $result.LastBoot
+        UptimeHours = $result.UptimeHours
+        RAMTotalGB = $result.RAMTotalGB
+    }
+    IPv4 = @($result.IPv4 | Where-Object { $null -ne $_ })
+    Disks = @($result.Disks | Where-Object { $null -ne $_ })
+    Services = @($result.Services | Where-Object { $null -ne $_ })
+}
+
+$report | ConvertTo-Json -Depth 8 |
+    Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
+
+Write-Host "`nJSON report saved: $reportPath" -ForegroundColor Green
